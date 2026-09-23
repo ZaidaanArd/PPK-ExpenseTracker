@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-16 text-foreground sm:px-10">
@@ -12,16 +14,27 @@ export default function HomePage() {
           Fondasi Next.js, PostgreSQL, dan shadcn/ui sudah disiapkan. Fitur aplikasi akan dikembangkan sesuai pembagian SRS.
         </p>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
-          {[
-            { title: "Akun", detail: "Register, login, session, cookies, dan logout." },
-            { title: "Transaksi", detail: "Pemasukan, pengeluaran, filter, dan otorisasi." },
-            { title: "Dashboard", detail: "Saldo, ringkasan keuangan, dan transaksi terbaru." },
-          ].map((item) => (
-            <section key={item.title} className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-              <h2 className="font-heading text-xl font-semibold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.detail}</p>
-            </section>
-          ))}
+          <section className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+            <h2 className="font-heading text-xl font-semibold">Akun</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Register, login, session, cookies, dan logout.
+            </p>
+          </section>
+          <section className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+            <h2 className="font-heading text-xl font-semibold">Transaksi</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Pemasukan, pengeluaran, filter, dan otorisasi.
+            </p>
+          </section>
+          <Link
+            href="/dashboard"
+            className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm transition-colors hover:bg-muted"
+          >
+            <h2 className="font-heading text-xl font-semibold">Dashboard</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Saldo, ringkasan keuangan, dan transaksi terbaru.
+            </p>
+          </Link>
         </div>
       </div>
     </main>
