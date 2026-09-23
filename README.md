@@ -14,6 +14,10 @@ Prasyarat: Node.js 20.9 atau lebih baru, pnpm, dan PostgreSQL. Proyek memakai Ne
 
 File `.env.local` tidak di-commit. Struktur tabel tersedia di `db/schema.sql`; koneksi database untuk kode aplikasi tersedia melalui `getDb()` di `src/lib/db.ts`.
 
+## Fondasi UI
+
+Antarmuka menggunakan [shadcn/ui preset `b228RDn6X2`](https://ui.shadcn.com/create?preset=b228RDn6X2) dengan gaya Nova, tema kuning, ikon Tabler, font Geist untuk teks, dan Raleway untuk judul. Konfigurasi komponen ada di `components.json`, sementara token warna dan tipografi ada di `src/app/globals.css`. Komponen baru dapat ditambahkan dengan `pnpm dlx shadcn@latest add <nama-komponen>`.
+
 ## Pembagian SRS
 
 ### Mochammad Yuda Tri Ananda — Akun dan Autentikasi
