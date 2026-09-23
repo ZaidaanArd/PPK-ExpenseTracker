@@ -2,6 +2,18 @@
 
 Aplikasi web **Expense Tracker** untuk mencatat pemasukan dan pengeluaran pribadi menggunakan **Next.js** dan **PostgreSQL**.
 
+## Menjalankan proyek
+
+Prasyarat: Node.js 20.9 atau lebih baru, pnpm, dan PostgreSQL. Proyek memakai Next.js App Router, TypeScript, dan koneksi PostgreSQL melalui paket `pg`.
+
+1. Jalankan `pnpm install` untuk memasang dependensi.
+2. Buat database PostgreSQL bernama `ppk_expense_tracker`, misalnya dengan `psql -U postgres -c "CREATE DATABASE ppk_expense_tracker;"`.
+3. Salin `.env.example` menjadi `.env.local`, lalu ganti `YOUR_PASSWORD` dengan password PostgreSQL lokal. Jika password mengandung karakter khusus, encode karakter tersebut dalam URL.
+4. Jalankan `pnpm db:init` untuk membuat tabel `users` dan `transactions`.
+5. Jalankan `pnpm dev`, lalu buka `http://localhost:3000`.
+
+File `.env.local` tidak di-commit. Struktur tabel tersedia di `db/schema.sql`; koneksi database untuk kode aplikasi tersedia melalui `getDb()` di `src/lib/db.ts`.
+
 ## Pembagian SRS
 
 ### Mochammad Yuda Tri Ananda — Akun dan Autentikasi
