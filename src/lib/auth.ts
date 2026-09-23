@@ -6,7 +6,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { sessions, users } from "@/db/schema";
-import { getDb } from "@/lib/db";
+import { getOrm } from "@/lib/db";
 
 const scrypt = promisify(scryptCallback);
 const SESSION_COOKIE = "ppk_session";
@@ -32,7 +32,7 @@ function hashToken(token: string) {
 
 export async function createSession(userId: string) {
   const token = randomBytes(32).toString("hex");
-  await getDb().insert(sessions).values({
+  await getOrm().insert(sessions).values({
     userId,
     tokenHash: hashToken(token),
     expiresAt: new Date(Date.now() + SESSION_AGE * 1000),
@@ -49,7 +49,7 @@ export async function createSession(userId: string) {
 export async function getCurrentUser() {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
-  const [session] = await getDb()
+  const [session] = await getOrm()
     .select({ id: users.id, name: users.name, email: users.email })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
@@ -68,7 +68,7 @@ export async function deleteSession() {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) {
-    await getDb().delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
+    await getOrm().delete(sessions).where(eq(sessions.tokenHash, hashToken(token)));
   }
   jar.delete(SESSION_COOKIE);
 }

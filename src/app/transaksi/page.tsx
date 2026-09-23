@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { IconPencil } from "@tabler/icons-react";
 import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
 import { TransactionFilterTabs } from "@/components/transactions/transaction-filter-tabs";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { buttonVariants } from "@/components/ui/button";
-import { formatRupiah, formatTanggal } from "@/lib/format";
-import { getSessionUser } from "@/lib/session";
+import { formatCurrency, formatRupiah, formatTanggal } from "@/lib/format";
+import { requireUser } from "@/lib/auth";
 import {
+  getDashboardSummary,
   listTransactions,
   normalizeFilter,
   type TransactionFilter,
@@ -28,11 +28,7 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
   const activeFilter = normalizeFilter(filter);
 
   // SRS-008: halaman ini cuma bisa diakses user yang sudah login.
-  const user = await getSessionUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   const allTransactions = await listTransactions(user.id);
   const transactions =
@@ -46,13 +42,7 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
     expense: allTransactions.filter((transaction) => transaction.type === "expense").length,
   };
 
-  const totalIncome = allTransactions
-    .filter((transaction) => transaction.type === "income")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-  const totalExpense = allTransactions
-    .filter((transaction) => transaction.type === "expense")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-  const balance = totalIncome - totalExpense;
+  const { balance } = await getDashboardSummary(user.id);
 
   const currentPath = activeFilter === "all" ? "/transaksi" : `/transaksi?filter=${activeFilter}`;
 
@@ -77,10 +67,15 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
             <p
               className={cn(
                 "font-heading text-2xl font-semibold",
-                balance < 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground",
+                Number(balance) < 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground",
               )}
             >
-        <section className="mt-8 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
+              {formatCurrency(balance)}
+            </p>
+          </div>
+        </header>
+
+        <section id="tambah" className="mt-8 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
           <h2 className="font-heading text-xl font-semibold">Tambah Transaksi</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Isi form di bawah buat nambahin transaksi baru, bisa pemasukan atau pengeluaran.
@@ -169,11 +164,6 @@ export default async function TransaksiPage({ searchParams }: TransaksiPageProps
           )}
         </section>
 
-              {formatRupiah(balance)}
-            </p>
-          </div>
-        </header>
-        {/* __SPLIT__ */}
       </div>
     </main>
   );

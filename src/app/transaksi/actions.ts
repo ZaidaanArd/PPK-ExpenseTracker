@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/session";
+import { getCurrentUser } from "@/lib/auth";
 import {
   createTransaction,
   deleteTransaction,
@@ -15,7 +15,7 @@ import {
 export type SaveTransactionState = { error: string | null };
 
 /** Batas nominal sesuai precision kolom NUMERIC(15, 2). */
-const AMOUNT_MAX = 99999999999999.99;
+const AMOUNT_MAX = 9999999999999.99;
 const DESCRIPTION_MAX = 200;
 
 function resolveRedirectTarget(value: FormDataEntryValue | null): string {
@@ -42,7 +42,7 @@ function parseTransactionInput(formData: FormData): ParsedTransaction {
   }
 
   if (amount > AMOUNT_MAX) {
-    return { ok: false, message: "Nominal kegedean, maximal Rp99.999.999.999.999,99 ya." };
+    return { ok: false, message: "Nominal maksimal Rp9.999.999.999.999,99." };
   }
 
   const description = String(formData.get("description") ?? "").trim();
@@ -57,9 +57,11 @@ function parseTransactionInput(formData: FormData): ParsedTransaction {
 
   const transactionDate = String(formData.get("transactionDate") ?? "").trim();
 
+  const parsedDate = new Date(`${transactionDate}T00:00:00Z`);
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(transactionDate) ||
-    Number.isNaN(new Date(`${transactionDate}T00:00:00Z`).getTime())
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.toISOString().slice(0, 10) !== transactionDate
   ) {
     return { ok: false, message: "Tanggal transaksi tidak valid." };
   }
@@ -82,7 +84,7 @@ export async function saveTransactionAction(
   formData: FormData,
 ): Promise<SaveTransactionState> {
   // SRS-008: cuma user yang sudah login yang boleh nyimpan transaksi.
-  const user = await getSessionUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: "Sesi kamu sudah berakhir. Login ulang dulu ya." };
@@ -122,7 +124,7 @@ export async function saveTransactionAction(
 
 export async function deleteTransactionAction(formData: FormData): Promise<void> {
   // SRS-008: cuma user yang sudah login yang boleh ngehapus transaksinya sendiri.
-  const user = await getSessionUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

@@ -19,3 +19,11 @@ const dateFormatter = new Intl.DateTimeFormat("id-ID", {
 export function formatTanggal(value: string): string {
   return dateFormatter.format(new Date(`${value}T00:00:00Z`));
 }
+
+export function formatCurrency(value: string | number): string {
+  return formatRupiah(Number(value));
+}
+
+export function formatDate(value: string): string {
+  return formatTanggal(value);
+}

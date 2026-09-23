@@ -141,3 +141,62 @@ export async function deleteTransaction(userId: string, id: string): Promise<boo
 
   return (rowCount ?? 0) > 0;
 }
+
+export type DashboardSummary = {
+  balance: string;
+  totalIncome: string;
+  totalExpense: string;
+};
+
+export type LatestTransaction = {
+  id: string;
+  type: TransactionType;
+  amount: string;
+  description: string;
+  transactionDate: string;
+};
+
+export async function getDashboardSummary(userId: string): Promise<DashboardSummary> {
+  const { rows } = await getDb().query<{
+    balance: string;
+    total_income: string;
+    total_expense: string;
+  }>(
+    `SELECT
+       COALESCE(SUM(amount) FILTER (WHERE type = 'income'), 0)::text AS total_income,
+       COALESCE(SUM(amount) FILTER (WHERE type = 'expense'), 0)::text AS total_expense,
+       (COALESCE(SUM(amount) FILTER (WHERE type = 'income'), 0)
+        - COALESCE(SUM(amount) FILTER (WHERE type = 'expense'), 0))::text AS balance
+     FROM transactions WHERE user_id = $1`,
+    [userId],
+  );
+
+  return {
+    balance: rows[0]?.balance ?? "0",
+    totalIncome: rows[0]?.total_income ?? "0",
+    totalExpense: rows[0]?.total_expense ?? "0",
+  };
+}
+
+export async function getLatestTransactions(userId: string, limit = 5): Promise<LatestTransaction[]> {
+  const { rows } = await getDb().query<{
+    id: string;
+    type: TransactionType;
+    amount: string;
+    description: string;
+    transaction_date: string;
+  }>(
+    `SELECT id, type, amount::text, transaction_date::text, description
+     FROM transactions WHERE user_id = $1
+     ORDER BY transaction_date DESC, created_at DESC LIMIT $2`,
+    [userId, limit],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    type: row.type,
+    amount: row.amount,
+    description: row.description,
+    transactionDate: row.transaction_date,
+  }));
+}

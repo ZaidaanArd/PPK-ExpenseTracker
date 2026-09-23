@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { findTransaction } from "@/lib/transactions";
-import { getSessionUser } from "@/lib/session";
+import { requireUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Ubah Transaksi — PPK Expense Tracker",
@@ -24,11 +24,7 @@ export default async function UbahTransaksiPage({ params, searchParams }: UbahTr
   const target = resolveRedirectTarget(redirectTo);
 
   // SRS-008: halaman ini cuma bisa diakses user yang sudah login.
-  const user = await getSessionUser();
-
-  if (!user) {
-    redirect("/login");
-  }
+  const user = await requireUser();
 
   // SRS-008: pencarian di-scoping ke user.id, transaksi orang lain dianggap tidak ada.
   const transaction = await findTransaction(user.id, id);
