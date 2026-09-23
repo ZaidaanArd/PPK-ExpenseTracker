@@ -4,15 +4,19 @@ Aplikasi web **Expense Tracker** untuk mencatat pemasukan dan pengeluaran pribad
 
 ## Menjalankan proyek
 
-Prasyarat: Node.js 20.9 atau lebih baru, pnpm, dan PostgreSQL. Proyek memakai Next.js App Router, TypeScript, dan koneksi PostgreSQL melalui paket `pg`.
+Prasyarat: Node.js 20.9 atau lebih baru, pnpm, dan PostgreSQL. Proyek memakai Next.js App Router, TypeScript, PostgreSQL, dan Drizzle ORM.
 
 1. Jalankan `pnpm install` untuk memasang dependensi.
 2. Buat database PostgreSQL bernama `ppk_expense_tracker`, misalnya dengan `psql -U postgres -c "CREATE DATABASE ppk_expense_tracker;"`.
 3. Salin `.env.example` menjadi `.env.local`, lalu ganti `YOUR_PASSWORD` dengan password PostgreSQL lokal. Jika password mengandung karakter khusus, encode karakter tersebut dalam URL.
-4. Jalankan `pnpm db:init` untuk membuat tabel `users` dan `transactions`.
+4. Jalankan `pnpm db:push` untuk membuat tabel `users`, `sessions`, dan `transactions` dari skema Drizzle.
 5. Jalankan `pnpm dev`, lalu buka `http://localhost:3000`.
 
-File `.env.local` tidak di-commit. Struktur tabel tersedia di `db/schema.sql`; koneksi database untuk kode aplikasi tersedia melalui `getDb()` di `src/lib/db.ts`.
+File `.env.local` tidak di-commit. Skema aplikasi ada di `src/db/schema.ts`; `pnpm db:generate` menyiapkan migrasi Drizzle untuk perubahan berikutnya. `pnpm db:init` tetap tersedia untuk setup SQL lama. Koneksi database untuk kode aplikasi tersedia melalui `getDb()` di `src/lib/db.ts`.
+
+## Akun dan autentikasi
+
+Pengguna dapat daftar di `/register`, masuk di `/login`, lalu membuka `/dashboard`. Password disimpan sebagai hash scrypt. Session tersimpan di tabel `sessions`; browser menyimpan token acak dalam cookie HttpOnly. Dashboard memeriksa session di server setiap kali dibuka. Tombol **Keluar** menghapus session dari database dan cookie browser. Di dashboard, pilihan tema terang atau gelap disimpan dalam cookie preferensi selama satu tahun.
 
 ## Fondasi UI
 
