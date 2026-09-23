@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-16 text-foreground sm:px-10">
@@ -9,8 +11,12 @@ export default function HomePage() {
           Kelola keuangan pribadi dengan lebih terstruktur.
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-          Fondasi Next.js, PostgreSQL, dan shadcn/ui sudah disiapkan. Fitur aplikasi akan dikembangkan sesuai pembagian SRS.
+          Catat pemasukan dan pengeluaranmu dengan lebih rapi. Mulai dengan akun pribadimu.
         </p>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link href="/register" className="rounded-lg bg-primary px-5 py-2.5 font-semibold text-primary-foreground hover:bg-primary/80">Daftar gratis</Link>
+          <Link href="/login" className="rounded-lg border px-5 py-2.5 font-semibold hover:bg-muted">Masuk</Link>
+        </div>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
           {[
             { title: "Akun", detail: "Register, login, session, cookies, dan logout." },
