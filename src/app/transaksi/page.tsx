@@ -3,18 +3,30 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { IconPencil } from "@tabler/icons-react";
 import { DeleteTransactionButton } from "@/components/transactions/delete-transaction-button";
+import { TransactionFilterTabs } from "@/components/transactions/transaction-filter-tabs";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { buttonVariants } from "@/components/ui/button";
 import { formatRupiah, formatTanggal } from "@/lib/format";
 import { getSessionUser } from "@/lib/session";
-import { listTransactions } from "@/lib/transactions";
+import {
+  listTransactions,
+  normalizeFilter,
+  type TransactionFilter,
+} from "@/lib/transactions";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Transaksi — PPK Expense Tracker",
 };
 
-export default async function TransaksiPage() {
+type TransaksiPageProps = {
+  searchParams: Promise<{ filter?: string | string[] }>;
+};
+
+export default async function TransaksiPage({ searchParams }: TransaksiPageProps) {
+  const { filter } = await searchParams;
+  const activeFilter = normalizeFilter(filter);
+
   // SRS-008: halaman ini cuma bisa diakses user yang sudah login.
   const user = await getSessionUser();
 
@@ -23,7 +35,16 @@ export default async function TransaksiPage() {
   }
 
   const allTransactions = await listTransactions(user.id);
-  const transactions = allTransactions;
+  const transactions =
+    activeFilter === "all"
+      ? allTransactions
+      : allTransactions.filter((transaction) => transaction.type === activeFilter);
+
+  const counts: Record<TransactionFilter, number> = {
+    all: allTransactions.length,
+    income: allTransactions.filter((transaction) => transaction.type === "income").length,
+    expense: allTransactions.filter((transaction) => transaction.type === "expense").length,
+  };
 
   const totalIncome = allTransactions
     .filter((transaction) => transaction.type === "income")
@@ -33,7 +54,7 @@ export default async function TransaksiPage() {
     .reduce((sum, transaction) => sum + transaction.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  const currentPath = "/transaksi";
+  const currentPath = activeFilter === "all" ? "/transaksi" : `/transaksi?filter=${activeFilter}`;
 
   return (
     <main className="min-h-screen bg-background px-6 py-12 text-foreground sm:px-10">
@@ -70,12 +91,17 @@ export default async function TransaksiPage() {
         </section>
 
         <section className="mt-10">
-          <h2 className="font-heading text-xl font-semibold">Daftar Transaksi</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-heading text-xl font-semibold">Daftar Transaksi</h2>
+            <TransactionFilterTabs active={activeFilter} counts={counts} />
+          </div>
 
           {transactions.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed bg-card p-10 text-center shadow-sm">
               <p className="text-muted-foreground">
-                Belum ada transaksi nih. Mulai catat lewat form di atas ya.
+                {activeFilter === "all"
+                  ? "Belum ada transaksi nih. Mulai catat lewat form di atas ya."
+                  : `Belum ada transaksi ${activeFilter === "income" ? "pemasukan" : "pengeluaran"} buat ditampilkan.`}
               </p>
             </div>
           ) : (
