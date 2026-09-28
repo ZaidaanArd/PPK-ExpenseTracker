@@ -28,7 +28,9 @@ Antarmuka menggunakan [shadcn/ui preset `b228RDn6X2`](https://ui.shadcn.com/crea
 
 ## Pembagian SRS
 
-### Mochammad Yuda Tri Ananda — Akun dan Autentikasi
+### Periode pertama — SRS-001 sampai SRS-009
+
+#### Mochammad Yuda Tri Ananda — Akun dan Autentikasi
 
 - **SRS-001: Register** — Pengguna dapat membuat akun dengan nama, email, dan password.
 - **SRS-002: Login** — Pengguna dapat masuk menggunakan email dan password.
@@ -36,16 +38,41 @@ Antarmuka menggunakan [shadcn/ui preset `b228RDn6X2`](https://ui.shadcn.com/crea
 - **SRS-007: Cookies** — Sistem menyimpan minimal satu preferensi pengguna dalam cookie.
 - **SRS-009: Logout** — Pengguna dapat mengakhiri session sehingga halaman terlindungi tidak dapat diakses sebelum login kembali.
 
-### Muhammad Hafidh Zufar Dewantara Hafidh — Transaksi
+#### Muhammad Hafidh Zufar Dewantara Hafidh — Transaksi
 
 - **SRS-005: Manajemen Transaksi** — Pengguna dapat menambahkan, melihat, mengubah, dan menghapus transaksi pemasukan maupun pengeluaran.
 - **SRS-006: Filter Transaksi** — Pengguna dapat memfilter daftar transaksi berdasarkan jenis pemasukan atau pengeluaran.
 - **SRS-008: Authorization** — Setiap transaksi terhubung dengan pemiliknya; pengguna hanya dapat mengakses dan mengelola transaksi miliknya sendiri.
 
-### Nayla Husna — Dashboard
+#### Nayla Husna — Dashboard
 
 - **SRS-004: Dashboard** — Dashboard menampilkan nama pengguna, saldo saat ini, total pemasukan, total pengeluaran, dan daftar transaksi terbaru.
 
-### Muhammad Zaidaan Ardiyansyah — Project Manager
+#### Muhammad Zaidaan Ardiyansyah — Project Manager periode pertama
 
 Meninjau dan merge hasil commit/push dari ketiga programmer.
+
+### Periode lanjutan — SRS-010 sampai SRS-016
+
+Setelah *deployment* dan evaluasi aplikasi, pengembangan dilanjutkan di **proyek dan repositori yang sama** — dilarang keras membuat repositori baru karena berakibat pembatalan nilai pertemuan sebelumnya. **Project Manager baru: Muhammad Hafidh Zufar**, dengan tiga developer: **Muchammad Yuda Tri Ananda**, **Jaidaan**, dan **Nela**.
+
+Sebelum fitur budget dinyatakan selesai, penerapan **AJAX** harus berjalan menyeluruh pada dashboard, manajemen transaksi, dan filter. Saat repo terakhir disinkronkan, data dashboard masih dimuat saat halaman dirender dan aksi transaksi masih melakukan redirect, jadi dua bagian itu disempurnakan lebih dulu. Setelah itu, ditambahkan fitur **budget (anggaran) bulanan** yang memungkinkan pengguna menetapkan serta mengelola anggaran pengeluaran mereka secara privat berdasarkan transaksi pengeluaran, mencakup **Set Budget** (pengaturan anggaran bulanan beserta *alert* jika terlampaui), **Budget Summary** (total anggaran, total pengeluaran, dan sisa anggaran), **Budget Indicator** (status penggunaan anggaran), dan **Monthly Budget** (memilih dan melihat anggaran berdasarkan bulan tertentu).
+
+| ID | SRS lanjutan | PIC | Cakupan dan kriteria selesai |
+|---|---|---|---|
+| **SRS-010** | AJAX Manajemen Transaksi | **Jaidaan** | Tambah, ubah, dan hapus transaksi tanpa reload atau redirect halaman. Daftar transaksi dan saldo yang tampil langsung mengikuti perubahan. Error ditampilkan di halaman. |
+| **SRS-011** | AJAX Filter Transaksi | **Jaidaan** | Pilihan semua, pemasukan, dan pengeluaran memperbarui daftar serta jumlah transaksi secara dinamis. Filter tetap sesuai setelah transaksi ditambah, diubah, atau dihapus. |
+| **SRS-012** | AJAX Dashboard | **Nela** | Saldo, total pemasukan, total pengeluaran, dan transaksi terbaru dapat dimuat ulang secara dinamis. Data yang tampil mengikuti perubahan transaksi tanpa pengguna me-refresh halaman. |
+| **SRS-013** | Set Budget | **Yuda** | Pengguna dapat menetapkan dan mengubah anggaran pengeluaran untuk bulan tertentu. Satu pengguna memiliki satu anggaran per bulan; hanya pemilik akun yang dapat membaca atau mengubahnya. |
+| **SRS-014** | Budget Summary | **Yuda** | Sistem menghitung total anggaran, total **transaksi pengeluaran** pada bulan terpilih, dan sisa anggaran. Pemasukan tidak masuk hitungan pemakaian budget. |
+| **SRS-015** | Budget Indicator & Alert | **Nela** | Tampilkan persentase dan status pemakaian budget. Jika pengeluaran **lebih besar** dari anggaran, tampilkan peringatan terlampaui dengan jelas. |
+| **SRS-016** | Monthly Budget | **Nela** | Pengguna dapat memilih bulan dan melihat budget, pengeluaran, sisa, serta indikator untuk bulan tersebut. Pergantian bulan memperbarui tampilan tanpa reload. |
+
+| Peran | Penanggung jawab | Fokus |
+|---|---|---|
+| **Project Manager baru** | **Muhammad Hafidh Zufar** | Menyepakati kontrak data, mengoordinasikan tiga branch kerja, review integrasi, memastikan AJAX menyeluruh, lalu mengevaluasi fitur budget dan deployment di repo yang sama. |
+| **Developer 1** | **Muchammad Yuda Tri Ananda** | Skema, penyimpanan, otorisasi, perhitungan, API, dan pengaturan budget. |
+| **Developer 2** | **Jaidaan** | Seluruh interaksi AJAX pada manajemen dan filter transaksi. |
+| **Developer 3** | **Nela** | AJAX dashboard serta tampilan summary, indikator, alert, dan pemilih bulan budget. |
+
+Supaya ketiganya bisa bekerja paralel, kontrak budget disepakati di awal: bulan memakai format `YYYY-MM`; data yang dikirim ke tampilan mencakup `budget`, `spent`, `remaining`, `percentage`, dan `exceeded`. Yuda dapat membangun sumber datanya bersamaan dengan Nela membangun tampilannya, sementara Jaidaan fokus di area transaksi. Detail lengkap ada di [`docs/srs-lanjutan.md`](docs/srs-lanjutan.md).
