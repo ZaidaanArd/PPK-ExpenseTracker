@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { IconAlertTriangle, IconPigMoney } from "@tabler/icons-react";
-import type { BudgetOverview, BudgetStatus } from "@/lib/budgets";
+import type { BudgetSummary } from "@/lib/budgets";
+import { budgetIndicator, type BudgetStatus } from "@/lib/budget-indicator";
 import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ const STATUS_STYLES: Record<BudgetStatus, { badge: string; bar: string; label: s
 type BudgetState =
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "ok"; data: BudgetOverview };
+  | { status: "ok"; data: BudgetSummary };
 
 /** SRS-016: pilih & atur anggaran per bulan, SRS-015: indikator & alert pemakaian. */
 export function BudgetPanel() {
@@ -53,7 +54,7 @@ export function BudgetPanel() {
 
     async function run() {
       try {
-        const response = await fetch(`/api/budget?month=${encodeURIComponent(month)}`, {
+        const response = await fetch(`/api/budgets?month=${encodeURIComponent(month)}`, {
           cache: "no-store",
         });
         const body = await response.json();
@@ -65,7 +66,7 @@ export function BudgetPanel() {
           return;
         }
 
-        const data = body as BudgetOverview;
+        const data = body as BudgetSummary;
         setState({ status: "ok", data });
         setAmount(data.budget ?? "");
       } catch {
@@ -103,10 +104,10 @@ export function BudgetPanel() {
     setNotice(null);
 
     try {
-      const response = await fetch("/api/budget", {
+      const response = await fetch("/api/budgets", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ month, amount: Number(amount.replace(",", ".")) }),
+        body: JSON.stringify({ month, amount: amount.replace(",", ".") }),
       });
       const body = await response.json();
 
@@ -115,7 +116,7 @@ export function BudgetPanel() {
         return;
       }
 
-      const data = body as BudgetOverview;
+      const data = body as BudgetSummary;
       setState({ status: "ok", data });
       setAmount(data.budget ?? "");
       setNotice("Anggaran berhasil disimpan!");
@@ -233,35 +234,36 @@ export function BudgetPanel() {
   );
 }
 
-function BudgetIndicator({ overview }: { overview: BudgetOverview }) {
-  const style = STATUS_STYLES[overview.status];
+function BudgetIndicator({ overview }: { overview: BudgetSummary }) {
+  const indicator = budgetIndicator(overview);
+  const style = STATUS_STYLES[indicator.status];
 
   return (
     <div className="mt-5">
-      {overview.status === "exceeded" ? (
+      {indicator.status === "exceeded" ? (
         <div
           role="alert"
           className="mb-4 flex items-start gap-2 rounded-lg border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-400"
         >
           <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <span>{overview.message}</span>
+          <span>{indicator.message}</span>
         </div>
       ) : null}
 
-      {overview.status === "warning" ? (
+      {indicator.status === "warning" ? (
         <div
           role="alert"
           className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400"
         >
           <IconAlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <span>{overview.message}</span>
+          <span>{indicator.message}</span>
         </div>
       ) : null}
 
-      {overview.status === "none" ? (
+      {indicator.status === "none" ? (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-dashed bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
           <IconPigMoney className="mt-0.5 size-4 shrink-0" />
-          <span>{overview.message} Isi form di bawah buat mulai pantau ya.</span>
+          <span>{indicator.message} Isi form di bawah buat mulai pantau ya.</span>
         </div>
       ) : null}
 
@@ -279,19 +281,19 @@ function BudgetIndicator({ overview }: { overview: BudgetOverview }) {
         className="mt-2 h-3 overflow-hidden rounded-full bg-muted"
         role="progressbar"
         aria-label="Pemakaian anggaran"
-        aria-valuenow={overview.percent}
+        aria-valuenow={indicator.percent}
         aria-valuemin={0}
         aria-valuemax={100}
       >
         <div
           className={cn("h-full rounded-full transition-all", style.bar)}
-          style={{ width: `${Math.min(overview.percent, 100)}%` }}
+          style={{ width: `${Math.min(indicator.percent, 100)}%` }}
         />
       </div>
 
       {overview.budget !== null ? (
         <p className="mt-2 text-xs text-muted-foreground">
-          Terpakai {overview.percent}% · sisa{" "}
+          Terpakai {indicator.percent}% · sisa{" "}
           <span
             className={cn(
               "font-semibold",
