@@ -4,6 +4,7 @@ import { IconCirclePlus } from "@tabler/icons-react";
 import { logout, setTheme } from "@/app/auth-actions";
 import { requireUser } from "@/lib/auth";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
+import { BudgetPanel } from "@/components/dashboard/budget-panel";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
@@ -39,6 +40,9 @@ export default async function DashboardPage() {
 
         {/* SRS-012: saldo, total, dan transaksi terbaru dimuat via AJAX. */}
         <DashboardOverview />
+
+        {/* SRS-015 + SRS-016: indikator & anggaran bulanan dimuat via AJAX. */}
+        <BudgetPanel />
 
         <section className="mt-10 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
           <h2 className="font-heading text-lg font-semibold">Preferensi tampilan</h2>
