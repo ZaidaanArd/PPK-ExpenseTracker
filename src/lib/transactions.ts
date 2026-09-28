@@ -178,6 +178,36 @@ export async function getDashboardSummary(userId: string): Promise<DashboardSumm
   };
 }
 
+export type TransactionListPayload = {
+  transactions: Transaction[];
+  counts: Record<TransactionFilter, number>;
+  summary: DashboardSummary;
+};
+
+export async function getTransactionList(
+  userId: string,
+  filter: TransactionFilter = "all",
+): Promise<TransactionListPayload> {
+  // SRS-008: semua pembacaan tetap ter-scope ke user pemilik transaksi.
+  const [all, summary] = await Promise.all([
+    listTransactions(userId),
+    getDashboardSummary(userId),
+  ]);
+
+  const counts: Record<TransactionFilter, number> = {
+    all: all.length,
+    income: all.filter((transaction) => transaction.type === "income").length,
+    expense: all.filter((transaction) => transaction.type === "expense").length,
+  };
+
+  return {
+    transactions:
+      filter === "all" ? all : all.filter((transaction) => transaction.type === filter),
+    counts,
+    summary,
+  };
+}
+
 export async function getLatestTransactions(userId: string, limit = 5): Promise<LatestTransaction[]> {
   const { rows } = await getDb().query<{
     id: string;
