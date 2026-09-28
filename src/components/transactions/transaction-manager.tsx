@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TransactionFilterTabs } from "@/components/transactions/transaction-filter-tabs";
 import {
   TransactionForm,
@@ -31,15 +31,19 @@ export function TransactionManager({
 }: TransactionManagerProps) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
+  const [filter, setFilter] = useState<TransactionFilter>(initialFilter);
+  const [isFetching, setIsFetching] = useState(false);
+  const [filterError, setFilterError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const filterQuery = initialFilter === "all" ? "" : `?filter=${initialFilter}`;
+  const filterQuery = filter === "all" ? "" : `?filter=${filter}`;
 
   // SRS-010: semua perubahan transaksi lewat fetch, jadi halaman nggak reload.
   async function requestApi(
     url: string,
     init: RequestInit,
     fallback: string,
-  ): Promise<{ error: string | null; data: TransactionListPayload | null }> {
+  ): Promise<{ error: string | null; data: TransactionListPayload | null; aborted?: boolean }> {
     try {
       const response = await fetch(url, init);
 
@@ -57,8 +61,53 @@ export function TransactionManager({
       }
 
       return { error: null, data: payload as TransactionListPayload };
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return { error: null, data: null, aborted: true };
+      }
+
       return { error: fallback, data: null };
+    }
+  }
+
+  // SRS-011: ganti filter nggak reload, daftar dan jumlah transaksinya di-fetch ulang.
+  async function handleFilterChange(nextFilter: TransactionFilter) {
+    if (nextFilter === filter) {
+      return;
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setIsFetching(true);
+    setFilterError(null);
+
+    const result = await requestApi(
+      `/api/transactions${nextFilter === "all" ? "" : `?filter=${nextFilter}`}`,
+      { signal: controller.signal },
+      "Gagal memuat transaksi. Coba lagi sebentar ya.",
+    );
+
+    if (result.aborted) {
+      return;
+    }
+
+    setIsFetching(false);
+
+    if (result.error) {
+      setFilterError(result.error);
+      return;
+    }
+
+    if (result.data) {
+      setData(result.data);
+      setFilter(nextFilter);
+      window.history.replaceState(
+        null,
+        "",
+        nextFilter === "all" ? "/transaksi" : `/transaksi?filter=${nextFilter}`,
+      );
     }
   }
 
@@ -163,24 +212,46 @@ export function TransactionManager({
         <section className="mt-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-xl font-semibold">Daftar Transaksi</h2>
-            <TransactionFilterTabs active={initialFilter} counts={data.counts} />
+            <div className="flex items-center gap-2">
+              {isFetching ? (
+                <span role="status" className="text-xs text-muted-foreground">
+                  Memuat…
+                </span>
+              ) : null}
+              <TransactionFilterTabs
+                active={filter}
+                counts={data.counts}
+                onSelect={handleFilterChange}
+              />
+            </div>
           </div>
 
-          {data.transactions.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed bg-card p-10 text-center shadow-sm">
-              <p className="text-muted-foreground">
-                {initialFilter === "all"
-                  ? "Belum ada transaksi nih. Mulai catat lewat form di atas ya."
-                  : `Belum ada transaksi ${initialFilter === "income" ? "pemasukan" : "pengeluaran"} buat ditampilkan.`}
-              </p>
-            </div>
-          ) : (
-            <TransactionTable
-              transactions={data.transactions}
-              onUpdate={handleUpdate}
-              onDelete={handleDelete}
-            />
-          )}
+          {filterError ? (
+            <p
+              role="alert"
+              className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {filterError}
+            </p>
+          ) : null}
+
+          <div aria-busy={isFetching} className={cn(isFetching && "opacity-60 transition-opacity")}>
+            {data.transactions.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-dashed bg-card p-10 text-center shadow-sm">
+                <p className="text-muted-foreground">
+                  {filter === "all"
+                    ? "Belum ada transaksi nih. Mulai catat lewat form di atas ya."
+                    : `Belum ada transaksi ${filter === "income" ? "pemasukan" : "pengeluaran"} buat ditampilkan.`}
+                </p>
+              </div>
+            ) : (
+              <TransactionTable
+                transactions={data.transactions}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+              />
+            )}
+          </div>
         </section>
       </div>
     </main>
