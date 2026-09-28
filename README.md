@@ -9,7 +9,7 @@ Prasyarat: Node.js 20.9 atau lebih baru, pnpm, dan PostgreSQL. Proyek memakai Ne
 1. Jalankan `pnpm install` untuk memasang dependensi.
 2. Buat database PostgreSQL bernama `ppk_expense_tracker`, misalnya dengan `psql -U postgres -c "CREATE DATABASE ppk_expense_tracker;"`.
 3. Salin `.env.example` menjadi `.env.local`, lalu ganti `YOUR_PASSWORD` dengan password PostgreSQL lokal. Jika password mengandung karakter khusus, encode karakter tersebut dalam URL.
-4. Jalankan `pnpm db:init` untuk membuat tabel `users`, `sessions`, dan `transactions`.
+4. Jalankan `pnpm db:init` untuk membuat tabel `users`, `sessions`, `transactions`, dan `monthly_budgets`. Kalau database sudah terlanjur terpakai dari periode sebelumnya, cukup jalankan `pnpm db:migrate` untuk menambahkan tabel baru secara idempoten.
 5. Jalankan `pnpm dev`, lalu buka `http://localhost:3000`.
 
 File `.env.local` tidak di-commit. Struktur tabel untuk setup awal ada di `db/schema.sql`, dengan model Drizzle yang sesuai di `src/db/schema.ts`. `getDb()` menyediakan koneksi `pg` dan `getOrm()` menyediakan query Drizzle.
@@ -18,13 +18,29 @@ File `.env.local` tidak di-commit. Struktur tabel untuk setup awal ada di `db/sc
 
 Pengguna dapat daftar di `/register`, masuk di `/login`, lalu membuka `/dashboard`. Password disimpan sebagai hash scrypt. Session tersimpan di tabel `sessions`; browser menyimpan token acak dalam cookie HttpOnly. Dashboard memeriksa session di server setiap kali dibuka. Tombol **Keluar** menghapus session dari database dan cookie browser. Di dashboard, pilihan tema terang atau gelap disimpan dalam cookie preferensi selama satu tahun.
 
-## Transaksi dan dashboard
+## Transaksi, dashboard, dan anggaran
 
-Halaman `/transaksi` menyediakan form tambah, daftar, filter pemasukan/pengeluaran, tombol ubah, dan tombol hapus. Setiap pembacaan dan perubahan transaksi dibatasi dengan ID pengguna dari session database. Dashboard menampilkan saldo, total pemasukan, total pengeluaran, serta lima transaksi terbaru. Tautan **Transaksi baru** menuju form tambah di `/transaksi#tambah`.
+Halaman `/transaksi` menyediakan form tambah, daftar, filter pemasukan/pengeluaran, tombol ubah, dan tombol hapus. Semua aksi berjalan via AJAX (fetch ke `/api/transactions`) tanpa reload atau redirect halaman, daftar dan saldo langsung mengikuti perubahan, dan error ditampilkan langsung di halaman. Setiap pembacaan dan perubahan transaksi dibatasi dengan ID pengguna dari session database.
+
+Dashboard menampilkan saldo, total pemasukan, total pengeluaran, serta lima transaksi terbaru yang dimuat ulang secara dinamis via `/api/dashboard` — bisa disegarkan manual atau otomatis tiap 30 detik tanpa me-refresh halaman.
+
+Fitur anggaran bulanan bersifat privat per akun: panel anggaran di dashboard dan halaman `/anggaran` memakai `/api/budgets` (format bulan `YYYY-MM`) untuk menetapkan anggaran, menampilkan ringkasan budget/pengeluaran/sisa, indikator persentase pemakaian, alert saat anggaran terlampaui, serta pemilih bulan tanpa reload. Pemasukan tidak dihitung sebagai pemakaian anggaran. Tautan **Transaksi baru** menuju form tambah di `/transaksi#tambah`.
 
 ## Fondasi UI
 
 Antarmuka menggunakan [shadcn/ui preset `b228RDn6X2`](https://ui.shadcn.com/create?preset=b228RDn6X2) dengan gaya Nova, tema kuning, ikon Tabler, font Geist untuk teks, dan Raleway untuk judul. Konfigurasi komponen ada di `components.json`, sementara token warna dan tipografi ada di `src/app/globals.css`. Komponen baru dapat ditambahkan dengan `pnpm dlx shadcn@latest add <nama-komponen>`.
+
+## Deploy
+
+Aplikasi butuh Node.js 20.9+ dan satu database PostgreSQL (lokal, Neon, Supabase, Railway, dan lainnya).
+
+1. Set environment variable `DATABASE_URL` (formatnya sama seperti di `.env.example`).
+2. Siapkan skema database:
+   - Database baru: `pnpm db:init` (menjalankan `db/schema.sql`, idempoten).
+   - Database yang sudah ada dari periode sebelumnya: `pnpm db:migrate` (menjalankan semua file di `db/migrations/`; aman diulang karena memakai `IF NOT EXISTS`).
+3. Build dan jalankan: `pnpm build` lalu `pnpm start`. Untuk pengembangan lokal tetap `pnpm dev`.
+
+Di platform seperti Vercel, set `DATABASE_URL` pada dashboard environment variable, lalu jalankan `pnpm db:init` atau `pnpm db:migrate` sekali dari mesin lokal dengan `DATABASE_URL` yang menunjuk ke database produksi sebelum deploy pertama.
 
 ## Pembagian SRS
 

@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:init": "node --env-file=.env.local scripts/init-db.mjs",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
     "db:generate": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs generate",
     "db:push": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push"
   },
