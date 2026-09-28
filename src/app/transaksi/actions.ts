@@ -4,12 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { parseTransactionFormData } from "@/lib/transaction-input";
-import {
-  createTransaction,
-  deleteTransaction,
-  isUuid,
-  updateTransaction,
-} from "@/lib/transactions";
+import { createTransaction, isUuid, updateTransaction } from "@/lib/transactions";
 
 export type SaveTransactionState = { error: string | null };
 
@@ -57,29 +52,6 @@ export async function saveTransactionAction(
     }
   } catch {
     return { error: "Gagal nyimpan transaksi. Coba lagi sebentar ya." };
-  }
-
-  revalidatePath("/transaksi");
-  redirect(resolveRedirectTarget(formData.get("redirectTo")));
-}
-
-export async function deleteTransactionAction(formData: FormData): Promise<void> {
-  // SRS-008: cuma user yang sudah login yang boleh ngehapus transaksinya sendiri.
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const id = String(formData.get("id") ?? "").trim();
-
-  if (isUuid(id)) {
-    try {
-      // SRS-008: delete di-scoping ke user.id, jadi transaksi orang lain aman.
-      await deleteTransaction(user.id, id);
-    } catch {
-      // Kalau database gagal, tetap balikin pengguna ke daftar transaksi.
-    }
   }
 
   revalidatePath("/transaksi");
